@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import Image from "next/image";
 import { supabase } from "@/src/supabaseClient";
 import { z } from "zod";
 
@@ -88,19 +89,38 @@ export default function Home() {
     title: editTitle,
     url: editUrl,
   }).success;
+  const avatarUrl =
+    user && typeof user.user_metadata?.avatar_url === "string"
+      ? user.user_metadata.avatar_url
+      : null;
 
-  // 1️⃣ Fetch current user
+  // Fetch current user
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+    const syncUser = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (error) console.error(error);
-      setUser(user ?? null);
+      setUser(session?.user ?? null);
       setLoading(false);
     };
-    getUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    syncUser();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // 2️⃣ Fetch bookmarks & subscribe to realtime updates
+  // Fetch bookmarks & subscribe to realtime updates
   useEffect(() => {
     if (!user) return;
 
@@ -127,7 +147,11 @@ export default function Home() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          setBookmarks((prev) => [payload.new as Bookmark, ...prev]);
+          setBookmarks((prev) =>
+            prev.some((bookmark) => bookmark.id === payload.new.id)
+              ? prev
+              : [payload.new as Bookmark, ...prev]
+          );
         }
       )
       .on(
@@ -206,10 +230,12 @@ export default function Home() {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-semibold text-stone-800">Your Bookmarks</h1>
             <div className="flex items-center gap-4">
-              {user.user_metadata?.avatar_url && (
-                <img
-                  src={user.user_metadata.avatar_url}
+              {avatarUrl && (
+                <Image
+                  src={avatarUrl}
                   alt="User Avatar"
+                  width={40}
+                  height={40}
                   className="h-10 w-10 rounded-full border border-stone-300 object-cover"
                 />
               )}
@@ -247,11 +273,19 @@ export default function Home() {
               const { title: validTitle, url: validUrl } = validation.data;
               setIsAdding(true);
               try {
-                const { data, error } = await supabase
+                const { data: insertedBookmark, error } = await supabase
                   .from("bookmarks")
-                  .insert([{ title: validTitle, url: validUrl, user_id: user.id }]);
+                  .insert([{ title: validTitle, url: validUrl, user_id: user.id }])
+                  .select()
+                  .single();
                 if (error) return console.error(error);
-                if (data && data[0]) setBookmarks((prev) => [data[0] as Bookmark, ...prev]);
+                if (insertedBookmark) {
+                  setBookmarks((prev) =>
+                    prev.some((bookmark) => bookmark.id === insertedBookmark.id)
+                      ? prev
+                      : [insertedBookmark as Bookmark, ...prev]
+                  );
+                }
 
                 setTitle("");
                 setUrl("");
@@ -342,7 +376,7 @@ export default function Home() {
                   <tr className="border-b border-stone-200 bg-stone-200/60 text-xs font-semibold uppercase tracking-wide text-stone-500">
                     <th className="px-4 py-3 text-left">Title</th>
                     <th className="px-4 py-3 text-left">URL</th>
-                    <th className="w-49 px-4 py-3 text-left">Actions</th>
+                    <th className="w-48 px-4 py-3 text-left">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-200">
@@ -555,7 +589,7 @@ export default function Home() {
             </p>
             <div className="mt-3 rounded-md border border-stone-200 bg-stone-100 p-3 text-sm">
               <p
-                className="whitespace-normal wrap-break-words font-medium text-stone-700"
+                className="whitespace-normal wrap-break-word font-medium text-stone-700"
                 title={deleteTarget.title}
               >
                 {deleteTarget.title}
