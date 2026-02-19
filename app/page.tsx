@@ -190,10 +190,10 @@ export default function Home() {
   if (loading) return <div className="p-4 text-center">Checking login...</div>;
 
   return (
-    <div className="min-h-screen bg-stone-100 p-6 text-stone-800">
+    <div className="min-h-screen bg-stone-100 p-4 text-stone-800 sm:p-6">
       {!user ? (
         <div className="mx-auto flex min-h-[70vh] w-full max-w-md items-center">
-          <div className="w-full rounded-2xl border border-stone-200 bg-stone-50 p-8 shadow-sm">
+          <div className="w-full rounded-2xl border border-stone-200 bg-stone-50 p-6 shadow-sm sm:p-8">
             <h1 className="text-2xl font-semibold text-stone-800">Welcome Back</h1>
             <p className="mt-2 text-sm text-stone-600">
               Sign in to manage your bookmarks from one place.
@@ -225,24 +225,31 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <div className="mx-auto max-w-3xl rounded-lg border border-stone-200 bg-stone-50 p-6 shadow-sm">
+        <div className="mx-auto max-w-4xl rounded-lg border border-stone-200 bg-stone-50 p-4 shadow-sm sm:p-6">
           {/* Header */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <h1 className="text-2xl font-semibold text-stone-800">Your Bookmarks</h1>
-            <div className="flex items-center gap-4">
-              {avatarUrl && (
-                <Image
-                  src={avatarUrl}
-                  alt="User Avatar"
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded-full border border-stone-300 object-cover"
-                />
-              )}
-              <span className="font-medium text-stone-700">{user.email}</span>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                {avatarUrl && (
+                  <Image
+                    src={avatarUrl}
+                    alt="User Avatar"
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full border border-stone-300 object-cover"
+                  />
+                )}
+                <span
+                  className="min-w-0 truncate font-medium text-stone-700"
+                  title={user.email ?? ""}
+                >
+                  {user.email}
+                </span>
+              </div>
               <button
                 disabled={isLoggingOut}
-                className="cursor-pointer rounded bg-red-600 px-3 py-1 text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:cursor-not-allowed disabled:bg-red-300 disabled:hover:bg-red-300"
+                className="w-full cursor-pointer rounded bg-red-600 px-3 py-1 text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:cursor-not-allowed disabled:bg-red-300 disabled:hover:bg-red-300 sm:w-auto"
                 onClick={() => {
                   setIsLogoutModalOpen(true);
                 }}
@@ -254,7 +261,7 @@ export default function Home() {
 
           {/* Add Bookmark Form */}
           <form
-            className="mb-6 flex items-start gap-2"
+            className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start"
             onSubmit={async (e) => {
               e.preventDefault();
               if (!user) return;
@@ -295,7 +302,7 @@ export default function Home() {
               }
             }}
           >
-            <div className="flex-1">
+            <div className="w-full sm:flex-1">
               <input
                 type="text"
                 placeholder="Title"
@@ -326,7 +333,7 @@ export default function Home() {
                 <p className="mt-1 text-sm text-rose-600">{formErrors.title}</p>
               )}
             </div>
-            <div className="flex-1">
+            <div className="w-full sm:flex-1">
               <input
                 type="url"
                 placeholder="URL"
@@ -360,7 +367,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={!isAddFormValid || isAdding}
-              className="cursor-pointer rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:hover:bg-blue-300"
+              className="w-full cursor-pointer rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:hover:bg-blue-300 sm:w-auto"
             >
               {isAdding ? "Adding..." : "Add"}
             </button>
@@ -370,205 +377,219 @@ export default function Home() {
           {bookmarks.length === 0 ? (
             <p className="text-stone-600">No bookmarks yet.</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-stone-200 bg-stone-100 shadow-sm">
-              <table className="min-w-full table-fixed">
-                <thead>
-                  <tr className="border-b border-stone-200 bg-stone-200/60 text-xs font-semibold uppercase tracking-wide text-stone-500">
-                    <th className="px-4 py-3 text-left">Title</th>
-                    <th className="px-4 py-3 text-left">URL</th>
-                    <th className="w-48 px-4 py-3 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-200">
-                  {bookmarks.map((b) => {
-                    const isUpdatingCurrent = updatingId === b.id;
-                    const isDeletingCurrent = deletingId === b.id;
-                    return (
-                      <tr key={b.id} className="align-top">
-                        {editingId === b.id ? (
-                          <>
-                            <td className="px-4 py-3">
-                              <input
-                                type="text"
-                                value={editTitle}
-                                aria-invalid={Boolean(editFormErrors.title)}
-                                onChange={(e) => {
-                                  const nextEditTitle = e.target.value;
-                                  setEditTitle(nextEditTitle);
-                                  if (editTouchedFields.title) {
-                                    setEditFormErrors((prev) => ({
-                                      ...prev,
-                                      title: getFieldError("title", nextEditTitle),
-                                    }));
-                                  }
-                                }}
-                                onBlur={() => {
-                                  setEditTouchedFields((prev) => ({ ...prev, title: true }));
+            <div className="overflow-hidden rounded-lg border border-stone-200 bg-stone-100 shadow-sm">
+              <div className="hidden grid-cols-[minmax(0,1.1fr)_minmax(0,1.9fr)_auto] border-b border-stone-200 bg-stone-200/60 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-stone-500 md:grid">
+                <span>Title</span>
+                <span>URL</span>
+                <span className="text-right">Actions</span>
+              </div>
+              <div className="divide-y divide-stone-200">
+                {bookmarks.map((b) => {
+                  const isUpdatingCurrent = updatingId === b.id;
+                  const isDeletingCurrent = deletingId === b.id;
+                  return (
+                    <div key={b.id} className="px-4 py-3">
+                      {editingId === b.id ? (
+                        <div className="grid gap-3 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.9fr)_auto] md:items-start">
+                          <div>
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500 md:hidden">
+                              Title
+                            </p>
+                            <input
+                              type="text"
+                              value={editTitle}
+                              aria-invalid={Boolean(editFormErrors.title)}
+                              onChange={(e) => {
+                                const nextEditTitle = e.target.value;
+                                setEditTitle(nextEditTitle);
+                                if (editTouchedFields.title) {
                                   setEditFormErrors((prev) => ({
                                     ...prev,
-                                    title: getFieldError("title", editTitle),
+                                    title: getFieldError("title", nextEditTitle),
                                   }));
-                                }}
-                                className={`w-full rounded border bg-stone-50 px-2 py-1 text-stone-800 focus:outline-none focus:ring-2 ${
-                                  getInputOutlineClasses(
-                                    editFormErrors.title,
-                                    editTouchedFields.title,
-                                    editTitle
-                                  )
-                                }`}
-                              />
-                              {editFormErrors.title && (
-                                <p className="mt-1 text-sm text-rose-600">{editFormErrors.title}</p>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
-                                type="url"
-                                value={editUrl}
-                                aria-invalid={Boolean(editFormErrors.url)}
-                                onChange={(e) => {
-                                  const nextEditUrl = e.target.value;
-                                  setEditUrl(nextEditUrl);
-                                  if (editTouchedFields.url) {
-                                    setEditFormErrors((prev) => ({
-                                      ...prev,
-                                      url: getFieldError("url", nextEditUrl),
-                                    }));
-                                  }
-                                }}
-                                onBlur={() => {
-                                  setEditTouchedFields((prev) => ({ ...prev, url: true }));
+                                }
+                              }}
+                              onBlur={() => {
+                                setEditTouchedFields((prev) => ({ ...prev, title: true }));
+                                setEditFormErrors((prev) => ({
+                                  ...prev,
+                                  title: getFieldError("title", editTitle),
+                                }));
+                              }}
+                              className={`w-full rounded border bg-stone-50 px-2 py-1 text-stone-800 focus:outline-none focus:ring-2 ${
+                                getInputOutlineClasses(
+                                  editFormErrors.title,
+                                  editTouchedFields.title,
+                                  editTitle
+                                )
+                              }`}
+                            />
+                            {editFormErrors.title && (
+                              <p className="mt-1 text-sm text-rose-600">{editFormErrors.title}</p>
+                            )}
+                          </div>
+                          <div>
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500 md:hidden">
+                              URL
+                            </p>
+                            <input
+                              type="url"
+                              value={editUrl}
+                              aria-invalid={Boolean(editFormErrors.url)}
+                              onChange={(e) => {
+                                const nextEditUrl = e.target.value;
+                                setEditUrl(nextEditUrl);
+                                if (editTouchedFields.url) {
                                   setEditFormErrors((prev) => ({
                                     ...prev,
-                                    url: getFieldError("url", editUrl),
+                                    url: getFieldError("url", nextEditUrl),
                                   }));
-                                }}
-                                className={`w-full rounded border bg-stone-50 px-2 py-1 text-stone-800 focus:outline-none focus:ring-2 ${
-                                  getInputOutlineClasses(
-                                    editFormErrors.url,
-                                    editTouchedFields.url,
-                                    editUrl
-                                  )
-                                }`}
-                              />
-                              {editFormErrors.url && (
-                                <p className="mt-1 text-sm text-rose-600">{editFormErrors.url}</p>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-2">
-                                <button
-                                  disabled={!isEditFormValid || isUpdatingCurrent}
-                                  className="cursor-pointer rounded bg-blue-600 px-3 py-1 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:hover:bg-blue-300"
-                                  onClick={async () => {
-                                    if (!user) return;
+                                }
+                              }}
+                              onBlur={() => {
+                                setEditTouchedFields((prev) => ({ ...prev, url: true }));
+                                setEditFormErrors((prev) => ({
+                                  ...prev,
+                                  url: getFieldError("url", editUrl),
+                                }));
+                              }}
+                              className={`w-full rounded border bg-stone-50 px-2 py-1 text-stone-800 focus:outline-none focus:ring-2 ${
+                                getInputOutlineClasses(
+                                  editFormErrors.url,
+                                  editTouchedFields.url,
+                                  editUrl
+                                )
+                              }`}
+                            />
+                            {editFormErrors.url && (
+                              <p className="mt-1 text-sm text-rose-600">{editFormErrors.url}</p>
+                            )}
+                          </div>
+                          <div>
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500 md:hidden">
+                              Actions
+                            </p>
+                            <div className="flex flex-wrap gap-2 md:justify-end">
+                              <button
+                                disabled={!isEditFormValid || isUpdatingCurrent}
+                                className="cursor-pointer rounded bg-blue-600 px-3 py-1 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:bg-blue-300 disabled:hover:bg-blue-300"
+                                onClick={async () => {
+                                  if (!user) return;
 
-                                    const validation = bookmarkFormSchema.safeParse({
-                                      title: editTitle,
-                                      url: editUrl,
+                                  const validation = bookmarkFormSchema.safeParse({
+                                    title: editTitle,
+                                    url: editUrl,
+                                  });
+                                  if (!validation.success) {
+                                    const { fieldErrors } = validation.error.flatten();
+                                    setEditFormErrors({
+                                      title: fieldErrors.title?.[0],
+                                      url: fieldErrors.url?.[0],
                                     });
-                                    if (!validation.success) {
-                                      const { fieldErrors } = validation.error.flatten();
-                                      setEditFormErrors({
-                                        title: fieldErrors.title?.[0],
-                                        url: fieldErrors.url?.[0],
-                                      });
-                                      return;
-                                    }
+                                    return;
+                                  }
 
-                                    setEditFormErrors({});
-                                    const { title: validTitle, url: validUrl } = validation.data;
-                                    setUpdatingId(b.id);
-                                    try {
-                                      const { data: updatedBookmark, error } = await supabase
-                                        .from("bookmarks")
-                                        .update({ title: validTitle, url: validUrl })
-                                        .eq("id", b.id)
-                                        .eq("user_id", user.id)
-                                        .select()
-                                        .single();
-                                      if (error) return console.error(error);
-                                      setBookmarks((prev) =>
-                                        prev.map((bm) =>
-                                          bm.id === b.id ? (updatedBookmark as Bookmark) : bm
-                                        )
-                                      );
-                                      setEditingId(null);
-                                      setEditTouchedFields(createInitialTouchedFields());
-                                    } finally {
-                                      setUpdatingId(null);
-                                    }
-                                  }}
-                                >
-                                  {isUpdatingCurrent ? "Updating..." : "Update"}
-                                </button>
-                                <button
-                                  disabled={isUpdatingCurrent}
-                                  className="cursor-pointer rounded bg-gray-600 px-3 py-1 text-white transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"
-                                  onClick={() => {
+                                  setEditFormErrors({});
+                                  const { title: validTitle, url: validUrl } = validation.data;
+                                  setUpdatingId(b.id);
+                                  try {
+                                    const { data: updatedBookmark, error } = await supabase
+                                      .from("bookmarks")
+                                      .update({ title: validTitle, url: validUrl })
+                                      .eq("id", b.id)
+                                      .eq("user_id", user.id)
+                                      .select()
+                                      .single();
+                                    if (error) return console.error(error);
+                                    setBookmarks((prev) =>
+                                      prev.map((bm) =>
+                                        bm.id === b.id ? (updatedBookmark as Bookmark) : bm
+                                      )
+                                    );
                                     setEditingId(null);
-                                    setEditFormErrors({});
                                     setEditTouchedFields(createInitialTouchedFields());
-                                  }}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-3">
-                              <p
-                                className="whitespace-normal break-all font-medium text-stone-700"
-                                title={b.title}
+                                  } finally {
+                                    setUpdatingId(null);
+                                  }
+                                }}
                               >
-                                {b.title}
-                              </p>
-                            </td>
-                            <td className="px-4 py-3 text-left">
-                              <a
-                                href={b.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block w-full whitespace-normal break-all text-left font-medium text-sky-600 hover:text-sky-700 hover:underline"
-                                title={b.url}
+                                {isUpdatingCurrent ? "Updating..." : "Update"}
+                              </button>
+                              <button
+                                disabled={isUpdatingCurrent}
+                                className="cursor-pointer rounded bg-gray-600 px-3 py-1 text-white transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"
+                                onClick={() => {
+                                  setEditingId(null);
+                                  setEditFormErrors({});
+                                  setEditTouchedFields(createInitialTouchedFields());
+                                }}
                               >
-                                {b.url}
-                              </a>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-2">
-                                <button
-                                  className="cursor-pointer rounded bg-blue-600 px-3 py-1 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                                  onClick={() => {
-                                    setEditingId(b.id);
-                                    setEditTitle(b.title);
-                                    setEditUrl(b.url);
-                                    setEditFormErrors({});
-                                    setEditTouchedFields(createInitialTouchedFields());
-                                  }}
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  disabled={Boolean(deletingId)}
-                                  className="cursor-pointer rounded bg-red-600 px-3 py-1 text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:cursor-not-allowed disabled:bg-red-300 disabled:hover:bg-red-300"
-                                  onClick={() => {
-                                    setDeleteTarget(b);
-                                  }}
-                                >
-                                  {isDeletingCurrent ? "Deleting..." : "Delete"}
-                                </button>
-                              </div>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid gap-3 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.9fr)_auto] md:items-start">
+                          <div>
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500 md:hidden">
+                              Title
+                            </p>
+                            <p
+                              className="whitespace-normal break-words font-medium text-stone-700"
+                              title={b.title}
+                            >
+                              {b.title}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500 md:hidden">
+                              URL
+                            </p>
+                            <a
+                              href={b.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block w-full whitespace-normal break-all text-left font-medium text-sky-600 hover:text-sky-700 hover:underline"
+                              title={b.url}
+                            >
+                              {b.url}
+                            </a>
+                          </div>
+                          <div>
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500 md:hidden">
+                              Actions
+                            </p>
+                            <div className="flex flex-wrap gap-2 md:justify-end">
+                              <button
+                                className="cursor-pointer rounded bg-blue-600 px-3 py-1 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                onClick={() => {
+                                  setEditingId(b.id);
+                                  setEditTitle(b.title);
+                                  setEditUrl(b.url);
+                                  setEditFormErrors({});
+                                  setEditTouchedFields(createInitialTouchedFields());
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                disabled={Boolean(deletingId)}
+                                className="cursor-pointer rounded bg-red-600 px-3 py-1 text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:cursor-not-allowed disabled:bg-red-300 disabled:hover:bg-red-300"
+                                onClick={() => {
+                                  setDeleteTarget(b);
+                                }}
+                              >
+                                {isDeletingCurrent ? "Deleting..." : "Delete"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -589,7 +610,7 @@ export default function Home() {
             </p>
             <div className="mt-3 rounded-md border border-stone-200 bg-stone-100 p-3 text-sm">
               <p
-                className="whitespace-normal wrap-break-word font-medium text-stone-700"
+                className="whitespace-normal break-words font-medium text-stone-700"
                 title={deleteTarget.title}
               >
                 {deleteTarget.title}
@@ -598,7 +619,7 @@ export default function Home() {
                 {deleteTarget.url}
               </p>
             </div>
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 disabled={Boolean(deletingId)}
                 className="cursor-pointer rounded bg-gray-600 px-3 py-1 text-white transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"
@@ -651,7 +672,7 @@ export default function Home() {
             <p className="mt-2 text-sm text-stone-600">
               You will need to sign in again with Google to continue.
             </p>
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 disabled={isLoggingOut}
                 className="cursor-pointer rounded bg-gray-600 px-3 py-1 text-white transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"
